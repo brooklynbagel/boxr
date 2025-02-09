@@ -150,9 +150,12 @@ box_datetime <- function(x) {
 }
 
 checkAuth <- function() {
-  if (is.null(getOption("boxr.token") %||% getOption("boxr_token_jwt")))
-    stop("It doesn't look like you've set up authentication for boxr yet.\n",
-         "See ?box_auth or ?box_auth_jwt")
+  if (is.null(getOption("boxr.token") %||% getOption("boxr_token_jwt"))) {
+    if (!(rlang::is_installed("connectcreds") && connectcreds::has_viewer_token())) {
+      stop("It doesn't look like you've set up authentication for boxr yet.\n",
+           "See ?box_auth or ?box_auth_jwt")
+    }
+  }
 }
 
 
@@ -461,4 +464,25 @@ stack_rows_df <- function(list_x) {
   do.call(rbind, lapply(list_x, stack_row_df))
 }
 
+httr2_to_httr_token <- function(httr2_token) {
+  if (!inherits(httr2_token, "httr2_token")) {
+    stop("Input must be an httr2_token object", call. = FALSE)
+  }
 
+  app <- 
+    httr::oauth_app(
+      appname = "boxr",
+      key     = NULL,
+      secret  = NULL,
+    )
+  
+  token <- 
+    httr::oauth2.0_token(
+      endpoint = NULL,
+      app = app,
+      credentials = httr2_token,
+      cache = FALSE
+    )
+  
+  token
+}

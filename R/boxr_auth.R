@@ -635,6 +635,11 @@ get_token <- function() {
   if (has_jwt_token()) {
     return(getOption("boxr_token_jwt"))
   }
+
+  if (rlang::is_installed("connectcreds") && connectcreds::has_viewer_token()) {
+    token <- connectcreds::connect_viewer_token()
+    return(httr::config(token = httr2_to_httr_token(token)))
+  }
   
   stop("No token available", call. = FALSE)
 }
